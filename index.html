@@ -8,7 +8,8 @@
   <meta name="description" content="Test Educación Social A2.2018">
 
   <!-- Iconos y manifest: es lo que Android e iPhone leen al crear el acceso directo -->
-  <link rel="manifest" href="manifest.webmanifest">
+  <!-- El manifest se añade por script solo fuera de iPhone/iPad (ver el script al final). -->
+  <!-- Con manifest, iOS abre el acceso directo en su start_url y pierde el ?a=… del enlace. -->
   <link rel="icon" type="image/png" sizes="64x64" href="iconos/favicon-64.png">
   <link rel="icon" type="image/png" sizes="192x192" href="iconos/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="iconos/apple-touch-icon.png">
@@ -65,7 +66,7 @@
 
     <div id="ayuda" class="ayuda oculto">
       <h2>Para tener la app en el móvil</h2>
-      <p>Hazlo con el enlace completo que te envió Angelines (el que acaba en <code>?a=…</code>).</p>
+      <p><strong>Hazlo desde esta pantalla, antes de pulsar «Abrir el test»</strong>, y con el enlace completo que te envió Angelines (el que acaba en <code>?a=…</code>).</p>
       <p><strong>iPhone (Safari):</strong></p>
       <ol>
         <li>Pulsa el botón Compartir (cuadrado con una flecha).</li>
@@ -84,6 +85,17 @@
     // Esta página NO contiene la dirección del test. El identificador llega en el
     // enlace que envía Angelines (…/?a=IDENTIFICADOR) y se recuerda en el móvil.
     var FORMATO_ID = /^[A-Za-z0-9_-]{20,200}$/;
+
+    // iPhone/iPad: sin manifest, el acceso directo recuerda la dirección completa (con ?a=…).
+    // Android y ordenador: se añade el manifest para poder instalar la app.
+    var esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!esIOS) {
+      var enlaceManifest = document.createElement('link');
+      enlaceManifest.rel = 'manifest';
+      enlaceManifest.href = 'manifest.webmanifest';
+      document.head.appendChild(enlaceManifest);
+    }
 
     function obtenerId() {
       var m = location.search.match(/[?&]a=([^&#]+)/) || location.hash.match(/[#&]a=([^&#]+)/);
