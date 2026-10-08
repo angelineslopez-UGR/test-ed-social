@@ -128,7 +128,8 @@
       mostrar('aviso');
     } else if (desdeIcono && !forzarVer) {
       document.getElementById('estado').textContent = 'Abriendo el test…';
-      window.location.replace(APP_URL);
+      // Se deja ver el icono grande un momento antes de entrar al test
+      setTimeout(function () { window.location.replace(APP_URL); }, 1600);
     } else {
       document.getElementById('abrir').href = APP_URL;
       mostrar('abrir');

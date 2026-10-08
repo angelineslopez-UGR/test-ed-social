@@ -360,6 +360,20 @@
   // Android y ordenador: se añade el manifest para poder instalar la app.
   const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // Pantalla de bienvenida (icono grande) al abrir desde el icono de la pantalla de inicio
+  const desdeIcono = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+                     window.navigator.standalone === true;
+  if (desdeIcono) {
+    const velo = document.createElement('div');
+    velo.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#F4F7F6;display:flex;' +
+      'flex-direction:column;align-items:center;justify-content:center;gap:18px;' +
+      'transition:opacity .4s ease;font-family:Calibri,"Segoe UI",Arial,sans-serif;color:#2C3E50;';
+    velo.innerHTML = '<img src="iconos/icon-192.png" alt="" style="width:140px;height:140px;border-radius:30px;' +
+      'box-shadow:0 6px 20px rgba(0,0,0,.15)"><div style="font-size:1.3rem;font-weight:bold">Test Educación Social</div>';
+    document.body.appendChild(velo);
+    setTimeout(() => { velo.style.opacity = '0'; setTimeout(() => velo.remove(), 450); }, 1500);
+  }
+
   if (!esIOS) {
     const enlaceManifest = document.createElement('link');
     enlaceManifest.rel = 'manifest';
