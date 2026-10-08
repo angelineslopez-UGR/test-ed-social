@@ -1,0 +1,16 @@
+{
+  "name": "Test Educación Social",
+  "short_name": "Test Ed. Social",
+  "description": "Test A2.2018 Educación Social",
+  "lang": "es",
+  "start_url": "./test.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F7F6",
+  "theme_color": "#00837A",
+  "icons": [
+    { "src": "iconos/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
