@@ -135,6 +135,18 @@
     }
     .nav-btns { display: flex; gap: 10px; margin-top: 15px; }
 
+    /* Texto del supuesto práctico: se escribe una vez y queda fijo mientras se responde */
+    .caso-fijo {
+      position: sticky; top: 0; z-index: 5;
+      background: #FFFBEA; border: 1px solid #E6D88A; border-left: 6px solid #D4AC0D;
+      border-radius: 8px; padding: 10px 14px; margin-bottom: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .caso-cab { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: bold; color: #7D6608; }
+    .caso-cab button { width: auto; margin: 0; padding: 4px 12px; font-size: 14px; background: #D4AC0D; }
+    .caso-texto { margin: 8px 0 0; max-height: 38vh; overflow-y: auto; white-space: pre-line; font-size: 1rem; line-height: 1.45; }
+    .caso-rev { background: #FFFBEA; border-left: 6px solid #D4AC0D; border-radius: 8px; padding: 12px 16px; margin: 20px 0 10px; white-space: pre-line; font-size: 1rem; }
+    .caso-rev strong.cab { display: block; color: #7D6608; margin-bottom: 6px; }
     .rev-card {
       border: 1px solid #EEE;
       padding: 18px;
@@ -228,10 +240,15 @@
 
       <div class="form-group">
         <label for="modalidad-select">1. Selecciona la Modalidad:</label>
-        <select id="modalidad-select" class="select-type" onchange="cargarTemas()">
+        <select id="modalidad-select" class="select-type" onchange="cargarModalidad()">
           <option value="PreguntasTeoria" selected>Test Teórico (PreguntasTeoria)</option>
-          <option value="PreguntasPractica">Test Práctico (PreguntasPractica)</option>
+          <option value="PreguntasPractica">Supuestos Prácticos (PreguntasPractica)</option>
         </select>
+      </div>
+
+      <div class="form-group hidden" id="grupo-supuesto">
+        <label for="supuesto-select">Supuesto práctico:</label>
+        <select id="supuesto-select" class="select-type" onchange="cargarTemas()"></select>
       </div>
 
       <div class="form-group">
@@ -285,6 +302,13 @@
 
     <!-- PANTALLA DE TEST -->
     <div id="sec-test" class="hidden">
+      <div id="caso-fijo" class="caso-fijo hidden">
+        <div class="caso-cab">
+          <span id="caso-titulo"></span>
+          <button type="button" id="caso-toggle" onclick="alternarCaso()">Ocultar</button>
+        </div>
+        <div id="caso-texto" class="caso-texto"></div>
+      </div>
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <span id="test-progreso" style="font-weight:bold;">Pregunta 1</span>
         <span id="test-tema" style="font-size:14px; color:#666;">Tema</span>
@@ -467,21 +491,53 @@
       return;
     }
     document.getElementById('app').classList.remove('hidden');
-    cargarTemas();
+    cargarModalidad();
   });
+
+  let supuestoActual = '';   // '' = todo | '__sueltas__' | nombre del supuesto
+
+  // Al cambiar de modalidad: carga la lista de supuestos (si la hoja los tiene) y luego los temas
+  async function cargarModalidad() {
+    modalidadActual = document.getElementById('modalidad-select').value;
+    const miModalidad = modalidadActual;
+    const grupo = document.getElementById('grupo-supuesto');
+    const sel = document.getElementById('supuesto-select');
+    grupo.classList.add('hidden');
+    sel.innerHTML = '';
+    supuestoActual = '';
+    try {
+      const r = await pedir({ action: 'supuestos', hoja: miModalidad });
+      if (miModalidad !== modalidadActual) return;
+      if (r && r.supuestos && r.supuestos.length > 0) {
+        let h = '<option value="">Todos (supuestos y preguntas sueltas)</option>';
+        r.supuestos.forEach(function (s) {
+          h += '<option value="' + esc(s.nombre) + '">' + esc(s.nombre) + ' (' + s.total + ' preguntas)</option>';
+        });
+        if (r.sueltas > 0) h += '<option value="__sueltas__">Solo preguntas sueltas (' + r.sueltas + ')</option>';
+        sel.innerHTML = h;
+        grupo.classList.remove('hidden');
+      }
+    } catch (e) {
+      // Si no hay supuestos (o el servidor aún no los conoce) se sigue sin ellos
+    }
+    if (miModalidad !== modalidadActual) return;
+    cargarTemas();
+  }
 
   async function cargarTemas() {
     modalidadActual = document.getElementById('modalidad-select').value;
-    const miModalidad = modalidadActual;
+    const sel = document.getElementById('supuesto-select');
+    supuestoActual = document.getElementById('grupo-supuesto').classList.contains('hidden') ? '' : sel.value;
+    const miModalidad = modalidadActual, miSupuesto = supuestoActual;
     const cont = document.getElementById('temas-list');
     cont.textContent = 'Cargando temas...';
     try {
-      const temas = await pedir({ action: 'temas', hoja: miModalidad });
-      if (miModalidad !== modalidadActual) return;   // el usuario cambió de modalidad mientras tanto
+      const temas = await pedir({ action: 'temas', hoja: miModalidad, supuesto: miSupuesto });
+      if (miModalidad !== modalidadActual || miSupuesto !== supuestoActual) return;   // el usuario cambió la selección mientras tanto
       ocultarError();
       mostrarTemas(temas);
     } catch (e) {
-      if (miModalidad !== modalidadActual) return;
+      if (miModalidad !== modalidadActual || miSupuesto !== supuestoActual) return;
       cont.textContent = 'No se pudieron cargar los temas.';
       mostrarError(e);
     }
@@ -519,7 +575,8 @@
         hoja: modalidadActual,
         temas: JSON.stringify(seleccionados),
         tipo: tipo,
-        cantidad: cant
+        cantidad: cant,
+        supuesto: supuestoActual
       });
       ocultarError();
       cargarPreguntas(data);
@@ -549,6 +606,7 @@
     document.getElementById('test-progreso').innerText = 'Pregunta ' + (indiceActual + 1) + ' de ' + preguntas.length;
     document.getElementById('test-tema').innerText = 'Tema: ' + p.tema;
     document.getElementById('test-enunciado').innerText = p.enunciado;
+    mostrarCaso(p);
 
     const cont = document.getElementById('opciones-container');
     cont.innerHTML = '';
@@ -572,6 +630,32 @@
 
     document.getElementById('btn-ant').style.visibility = indiceActual === 0 ? 'hidden' : 'visible';
     document.getElementById('btn-sig').innerText = indiceActual === preguntas.length - 1 ? 'Finalizar' : 'Siguiente';
+  }
+
+  let casoPlegado = false;
+
+  function tituloCaso(p) {
+    return 'Supuesto ' + p.supuesto + (p.casoTitulo ? ' — ' + p.casoTitulo : '');
+  }
+
+  // Panel fijo con el enunciado del supuesto (solo si la pregunta pertenece a uno)
+  function mostrarCaso(p) {
+    const caja = document.getElementById('caso-fijo');
+    if (!p.supuesto || !p.caso) { caja.classList.add('hidden'); return; }
+    document.getElementById('caso-titulo').textContent = '📌 ' + tituloCaso(p);
+    document.getElementById('caso-texto').textContent = p.caso;
+    aplicarPliegueCaso();
+    caja.classList.remove('hidden');
+  }
+
+  function aplicarPliegueCaso() {
+    document.getElementById('caso-texto').classList.toggle('hidden', casoPlegado);
+    document.getElementById('caso-toggle').textContent = casoPlegado ? 'Mostrar' : 'Ocultar';
+  }
+
+  function alternarCaso() {
+    casoPlegado = !casoPlegado;
+    aplicarPliegueCaso();
   }
 
   function seleccionarOpcion(id, letra) {
@@ -601,6 +685,7 @@
     let correctas = 0;
     const historialAEnviar = [];
     let htmlRev = '';
+    let supAnterior = '';
 
     preguntas.forEach(function (p, idx) {
       const respUser = respuestasUsuario[p.id] || 'En blanco';
@@ -621,6 +706,13 @@
         respuestaUsuario: respUser,
         resultado: resultado
       });
+
+      // El texto del supuesto se muestra una sola vez, antes de sus preguntas
+      const supActual = (p.supuesto && p.caso) ? p.supuesto : '';
+      if (supActual && supActual !== supAnterior) {
+        htmlRev += '<div class="caso-rev"><strong class="cab">📌 ' + esc(tituloCaso(p)) + '</strong>' + esc(p.caso) + '</div>';
+      }
+      supAnterior = supActual;
 
       const claseCard = resultado === 'Correcta' ? 'correct' : (resultado === 'Incorrecta' ? 'incorrect' : 'unanswered');
       htmlRev +=
