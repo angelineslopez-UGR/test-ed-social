@@ -241,8 +241,9 @@
       <div class="form-group">
         <label for="modalidad-select">1. Selecciona la Modalidad:</label>
         <select id="modalidad-select" class="select-type" onchange="cargarModalidad()">
-          <option value="PreguntasTeoria" selected>Test Teórico (PreguntasTeoria)</option>
-          <option value="PreguntasPractica">Supuestos Prácticos (PreguntasPractica)</option>
+          <option value="PreguntasTeoria" selected>Preguntas Teóricas</option>
+          <option value="PreguntasPractica">Preguntas Prácticas</option>
+          <option value="PreguntasSupuestos">Supuestos Prácticos</option>
         </select>
       </div>
 
@@ -509,7 +510,7 @@
       const r = await pedir({ action: 'supuestos', hoja: miModalidad });
       if (miModalidad !== modalidadActual) return;
       if (r && r.supuestos && r.supuestos.length > 0) {
-        let h = '<option value="">Todos (supuestos y preguntas sueltas)</option>';
+        let h = '<option value="">Todos los supuestos</option>';
         r.supuestos.forEach(function (s) {
           h += '<option value="' + esc(s.nombre) + '">' + esc(s.nombre) + ' (' + s.total + ' preguntas)</option>';
         });
