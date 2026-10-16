@@ -244,6 +244,7 @@
           <option value="PreguntasTeoria" selected>Preguntas Teóricas</option>
           <option value="PreguntasPractica">Preguntas Prácticas</option>
           <option value="PreguntasSupuestos">Supuestos Prácticos</option>
+          <option value="PreguntasBloques">Bloques Específicos</option>
         </select>
       </div>
 
@@ -253,7 +254,7 @@
       </div>
 
       <div class="form-group">
-        <label>2. Selecciona los Temas:</label>
+        <label id="label-temas">2. Selecciona los Temas:</label>
         <div style="margin-bottom:8px;">
           <button type="button" onclick="toggleTodosTemas(true)" style="width:auto; padding:6px 12px; font-size:14px;">Todos</button>
           <button type="button" onclick="toggleTodosTemas(false)" style="width:auto; padding:6px 12px; font-size:14px;">Ninguno</button>
@@ -342,12 +343,12 @@
 
       <div id="stats-global-card" class="stats-card">Cargando estadísticas...</div>
 
-      <h3>Rendimiento Actual por Tema</h3>
+      <h3 id="stats-subtitulo">Rendimiento Actual por Tema</h3>
       <div style="overflow-x:auto;">
         <table class="stats-table">
           <thead>
             <tr>
-              <th>Tema</th>
+              <th id="stats-th-tema">Tema</th>
               <th>Correctas</th>
               <th>Incorrectas</th>
               <th>% Acierto</th>
@@ -495,11 +496,22 @@
     cargarModalidad();
   });
 
+  // La modalidad «Bloques Específicos» se organiza por materias (Acoso Escolar, Ciberacoso…) y no por número de tema
+  const MOD_BLOQUES = 'PreguntasBloques';
+  function esBloques() { return modalidadActual === MOD_BLOQUES; }
+  function etiquetaTema(t) { return esBloques() ? String(t) : 'Tema ' + t; }
+  function actualizarRotulosModalidad() {
+    document.getElementById('label-temas').textContent = esBloques() ? '2. Selecciona los Bloques:' : '2. Selecciona los Temas:';
+    document.getElementById('stats-subtitulo').textContent = esBloques() ? 'Rendimiento Actual por Bloque' : 'Rendimiento Actual por Tema';
+    document.getElementById('stats-th-tema').textContent = esBloques() ? 'Bloque' : 'Tema';
+  }
+
   let supuestoActual = '';   // '' = todo | '__sueltas__' | nombre del supuesto
 
   // Al cambiar de modalidad: carga la lista de supuestos (si la hoja los tiene) y luego los temas
   async function cargarModalidad() {
     modalidadActual = document.getElementById('modalidad-select').value;
+    actualizarRotulosModalidad();
     const miModalidad = modalidadActual;
     const grupo = document.getElementById('grupo-supuesto');
     const sel = document.getElementById('supuesto-select');
@@ -551,7 +563,7 @@
       return;
     }
     cont.innerHTML = temas.map(function (t) {
-      return '<label><input type="checkbox" class="tema-cb" value="' + esc(t) + '" checked> Tema ' + esc(t) + '</label>';
+      return '<label><input type="checkbox" class="tema-cb" value="' + esc(t) + '" checked> ' + esc(etiquetaTema(t)) + '</label>';
     }).join('');
   }
 
@@ -605,7 +617,7 @@
   function renderPregunta() {
     const p = preguntas[indiceActual];
     document.getElementById('test-progreso').innerText = 'Pregunta ' + (indiceActual + 1) + ' de ' + preguntas.length;
-    document.getElementById('test-tema').innerText = 'Tema: ' + p.tema;
+    document.getElementById('test-tema').innerText = (esBloques() ? 'Bloque: ' : 'Tema: ') + p.tema;
     document.getElementById('test-enunciado').innerText = p.enunciado;
     mostrarCaso(p);
 
@@ -718,7 +730,7 @@
       const claseCard = resultado === 'Correcta' ? 'correct' : (resultado === 'Incorrecta' ? 'incorrect' : 'unanswered');
       htmlRev +=
         '<div class="rev-card ' + claseCard + '">' +
-          '<p><strong>' + (idx + 1) + '. ' + esc(p.enunciado) + '</strong> (Tema ' + esc(p.tema) + ')</p>' +
+          '<p><strong>' + (idx + 1) + '. ' + esc(p.enunciado) + '</strong> (' + esc(etiquetaTema(p.tema)) + ')</p>' +
           '<p>Tu respuesta: <strong>' + esc(respUser) + '</strong> | Correcta: <strong>' + esc(p.correcta) + '</strong></p>' +
           (p.explicacion ? '<div class="explanation">💡 <strong>Explicación:</strong> ' + esc(p.explicacion) + '</div>' : '') +
         '</div>';
@@ -805,7 +817,7 @@
       let colorPct = t.porcentajeAcierto >= 70 ? '#2ECC71' : (t.porcentajeAcierto >= 50 ? '#F39C12' : '#E74C3C');
       if (t.respondidas === 0) colorPct = '#95A5A6';
       return '<tr>' +
-        '<td><strong>Tema ' + esc(t.tema) + '</strong></td>' +
+        '<td><strong>' + esc(etiquetaTema(t.tema)) + '</strong></td>' +
         '<td style="color:#2ECC71; font-weight:bold;">' + t.correctas + '</td>' +
         '<td style="color:#E74C3C; font-weight:bold;">' + t.incorrectas + '</td>' +
         '<td><span class="badge-pct" style="background-color:' + colorPct + '; color:white;">' +
