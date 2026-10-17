@@ -245,6 +245,7 @@
           <option value="PreguntasPractica">Preguntas Prácticas</option>
           <option value="PreguntasSupuestos">Supuestos Prácticos</option>
           <option value="PreguntasBloques">Bloques Específicos</option>
+          <option value="OtrosExamenes">Otros Exámenes</option>
         </select>
       </div>
 
@@ -496,14 +497,24 @@
     cargarModalidad();
   });
 
-  // La modalidad «Bloques Específicos» se organiza por materias (Acoso Escolar, Ciberacoso…) y no por número de tema
-  const MOD_BLOQUES = 'PreguntasBloques';
-  function esBloques() { return modalidadActual === MOD_BLOQUES; }
-  function etiquetaTema(t) { return esBloques() ? String(t) : 'Tema ' + t; }
+  // Rótulos según la modalidad. Por defecto, los números de la columna «Tema» se muestran como «Tema 1».
+  // En «Bloques Específicos» y «Otros Exámenes» se muestra el texto de la columna tal cual
+  // (y si es un número, con el rótulo de la modalidad: «Bloque 3», «Apartado 3»).
+  const ROTULOS_MODALIDAD = {
+    PreguntasBloques: { singular: 'Bloque', plural: 'Bloques', textoTal: true },
+    OtrosExamenes: { singular: 'Apartado', plural: 'Apartados', textoTal: true }
+  };
+  function rotulos() { return ROTULOS_MODALIDAD[modalidadActual] || { singular: 'Tema', plural: 'Temas', textoTal: false }; }
+  function etiquetaTema(t) {
+    const r = rotulos();
+    if (r.textoTal && !/^\d+$/.test(String(t).trim())) return String(t);
+    return r.singular + ' ' + t;
+  }
   function actualizarRotulosModalidad() {
-    document.getElementById('label-temas').textContent = esBloques() ? '2. Selecciona los Bloques:' : '2. Selecciona los Temas:';
-    document.getElementById('stats-subtitulo').textContent = esBloques() ? 'Rendimiento Actual por Bloque' : 'Rendimiento Actual por Tema';
-    document.getElementById('stats-th-tema').textContent = esBloques() ? 'Bloque' : 'Tema';
+    const r = rotulos();
+    document.getElementById('label-temas').textContent = '2. Selecciona los ' + r.plural + ':';
+    document.getElementById('stats-subtitulo').textContent = 'Rendimiento Actual por ' + r.singular;
+    document.getElementById('stats-th-tema').textContent = r.singular;
   }
 
   let supuestoActual = '';   // '' = todo | '__sueltas__' | nombre del supuesto
@@ -617,7 +628,7 @@
   function renderPregunta() {
     const p = preguntas[indiceActual];
     document.getElementById('test-progreso').innerText = 'Pregunta ' + (indiceActual + 1) + ' de ' + preguntas.length;
-    document.getElementById('test-tema').innerText = (esBloques() ? 'Bloque: ' : 'Tema: ') + p.tema;
+    document.getElementById('test-tema').innerText = rotulos().singular + ': ' + p.tema;
     document.getElementById('test-enunciado').innerText = p.enunciado;
     mostrarCaso(p);
 
