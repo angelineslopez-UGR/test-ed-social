@@ -500,10 +500,10 @@
 
   // Rótulos según la modalidad. Por defecto, los números de la columna «Tema» se muestran como «Tema 1».
   // En «Bloques Específicos» y «Otros Exámenes» se muestra el texto de la columna tal cual
-  // (y si es un número, con el rótulo de la modalidad: «Bloque 3», «Apartado 3»).
+  // (y si es un número, con el rótulo de la modalidad: «Bloque 3», «Tema 3»).
   const ROTULOS_MODALIDAD = {
     PreguntasBloques: { singular: 'Bloque', plural: 'Bloques', textoTal: true },
-    OtrosExamenes: { singular: 'Apartado', plural: 'Apartados', textoTal: true }
+    OtrosExamenes: { singular: 'Tema', plural: 'Temas', textoTal: true }
   };
   function rotulos() { return ROTULOS_MODALIDAD[modalidadActual] || { singular: 'Tema', plural: 'Temas', textoTal: false }; }
   function etiquetaTema(t) {
