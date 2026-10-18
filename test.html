@@ -79,7 +79,11 @@
       cursor: pointer;
       white-space: nowrap;
     }
+    /* Nombres largos (bloques): columnas más anchas y el texto puede partirse */
+    .checkbox-grid.largo { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+    .checkbox-grid.largo label { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
     .checkbox-grid input {
+      flex-shrink: 0;
       margin-right: 6px;
       accent-color: var(--primary);
       cursor: pointer;
@@ -500,10 +504,10 @@
 
   // Rótulos según la modalidad. Por defecto, los números de la columna «Tema» se muestran como «Tema 1».
   // En «Bloques Específicos» y «Otros Exámenes» se muestra el texto de la columna tal cual
-  // (y si es un número, con el rótulo de la modalidad: «Bloque 3», «Tema 3»).
+  // (y si es un número, con el rótulo de la modalidad: «Bloque 3», «Apartado 3»).
   const ROTULOS_MODALIDAD = {
     PreguntasBloques: { singular: 'Bloque', plural: 'Bloques', textoTal: true },
-    OtrosExamenes: { singular: 'Tema', plural: 'Temas', textoTal: true }
+    OtrosExamenes: { singular: 'Apartado', plural: 'Apartados', textoTal: true }
   };
   function rotulos() { return ROTULOS_MODALIDAD[modalidadActual] || { singular: 'Tema', plural: 'Temas', textoTal: false }; }
   function etiquetaTema(t) {
@@ -574,6 +578,8 @@
       cont.textContent = 'No se encontraron temas en la hoja ' + modalidadActual + '.';
       return;
     }
+    const hayLargos = temas.some(function (t) { return etiquetaTema(t).length > 12; });
+    cont.classList.toggle('largo', hayLargos);
     cont.innerHTML = temas.map(function (t) {
       return '<label><input type="checkbox" class="tema-cb" value="' + esc(t) + '" checked> ' + esc(etiquetaTema(t)) + '</label>';
     }).join('');
