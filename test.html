@@ -156,6 +156,7 @@
       font-size: 1rem;
     }
     .rev-card p, .explanation { white-space: pre-line; }
+    .rev-card p.resp-linea { margin: 6px 0; }
     .rev-card.correct { border-left: 6px solid var(--correct); }
     .rev-card.incorrect { border-left: 6px solid var(--incorrect); }
     .rev-card.unanswered { border-left: 6px solid var(--unanswered); }
@@ -499,10 +500,10 @@
 
   // Rótulos según la modalidad. Por defecto, los números de la columna «Tema» se muestran como «Tema 1».
   // En «Bloques Específicos» y «Otros Exámenes» se muestra el texto de la columna tal cual
-  // (y si es un número, con el rótulo de la modalidad: «Bloque 3», «Tema 3»).
+  // (y si es un número, con el rótulo de la modalidad: «Bloque 3», «Apartado 3»).
   const ROTULOS_MODALIDAD = {
     PreguntasBloques: { singular: 'Bloque', plural: 'Bloques', textoTal: true },
-    OtrosExamenes: { singular: 'Tema', plural: 'Temas', textoTal: true }
+    OtrosExamenes: { singular: 'Apartado', plural: 'Apartados', textoTal: true }
   };
   function rotulos() { return ROTULOS_MODALIDAD[modalidadActual] || { singular: 'Tema', plural: 'Temas', textoTal: false }; }
   function etiquetaTema(t) {
@@ -682,6 +683,13 @@
     aplicarPliegueCaso();
   }
 
+  // «B) texto de la opción B» (o «En blanco» si no se respondió)
+  function textoRespuesta(p, letra) {
+    if (letra === 'En blanco') return 'En blanco (sin responder)';
+    const texto = { A: p.opcionA, B: p.opcionB, C: p.opcionC, D: p.opcionD }[letra];
+    return texto ? letra + ') ' + texto : String(letra || '');
+  }
+
   function seleccionarOpcion(id, letra) {
     if (respuestasUsuario[id] === letra) {
       delete respuestasUsuario[id];
@@ -742,7 +750,8 @@
       htmlRev +=
         '<div class="rev-card ' + claseCard + '">' +
           '<p><strong>' + (idx + 1) + '. ' + esc(p.enunciado) + '</strong> (' + esc(etiquetaTema(p.tema)) + ')</p>' +
-          '<p>Tu respuesta: <strong>' + esc(respUser) + '</strong> | Correcta: <strong>' + esc(p.correcta) + '</strong></p>' +
+          '<p class="resp-linea">Tu respuesta: <strong>' + esc(textoRespuesta(p, respUser)) + '</strong></p>' +
+          '<p class="resp-linea">Respuesta correcta: <strong>' + esc(textoRespuesta(p, p.correcta)) + '</strong></p>' +
           (p.explicacion ? '<div class="explanation">💡 <strong>Explicación:</strong> ' + esc(p.explicacion) + '</div>' : '') +
         '</div>';
     });
